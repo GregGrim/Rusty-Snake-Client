@@ -1,27 +1,25 @@
-pub mod client {
-    use futures_util::{SinkExt, StreamExt};
-    use tokio_tungstenite::connect_async;
-    use tokio_tungstenite::tungstenite::Message;
-    
-    #[tokio::main]
-    pub async fn run() {
-        let url = "wss://echo.websocket.events";
+use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::connect_async;
+use tokio_tungstenite::tungstenite::Message;
 
-        println!("Hello, world!");
+#[tokio::main]
+pub async fn run() {
+    let url = "wss://echo.websocket.events";
 
-        let (ws_stream, _) = connect_async(url).await.expect("Failed to connect!");
+    println!("Hello, world!");
 
-        println!("Connected to Agent Network");
+    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect!");
 
-        let (mut write, mut read) = ws_stream.split();
+    println!("Connected to Agent Network");
 
-        let msg = Message::Text("Privet".into());
+    let (mut write, mut read) = ws_stream.split();
 
-        write.send(msg).await.expect("Failed to send msg");
+    let msg = Message::Text("Privet".into());
 
-        if let Some(message) = read.next().await{
-            let message = message.expect("Failed to read the msg");
-            println!("Received a messaage: {}", message)
-        }
+    write.send(msg).await.expect("Failed to send msg");
+
+    if let Some(message) = read.next().await{
+        let message = message.expect("Failed to read the msg");
+        println!("Received a messaage: {}", message)
     }
 }
