@@ -1,7 +1,7 @@
 const gameField = document.getElementById('gameField');
 
 // Create the 20x20 grid
-for (let i = 0; i < 400; i++) {
+for (let i = 1; i <= 400; i++) {
     const cell = document.createElement('div');
     cell.classList.add('cell');
     gameField.appendChild(cell);

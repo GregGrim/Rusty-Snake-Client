@@ -12,6 +12,7 @@ mod engine;
 
 type SharedGameData = Arc<Mutex<GameData>>;
 type SharedPlayerData = Arc<Mutex<PlayerData>>;
+type FoodUpdatedState = Arc<Mutex<bool>>;
 
 #[derive(Deserialize)]
 struct ChangeDirectionRequest {
@@ -31,11 +32,15 @@ async fn change_direction(player_data: web::Data<SharedPlayerData>, direction_pa
 }
 
 #[get("/start")]
-async fn start_game(game_data: web::Data<SharedGameData>, player_data: web::Data<SharedPlayerData>) -> impl Responder {
+async fn start_game(
+    game_data: web::Data<SharedGameData>, 
+    player_data: web::Data<SharedPlayerData>,
+    food_updated: web::Data<FoodUpdatedState>
+) -> impl Responder {
     
-    tokio::spawn(engine::run_snake_engine(Arc::clone(&player_data)));
+    tokio::spawn(engine::run_snake_engine(Arc::clone(&player_data), Arc::clone(&game_data), Arc::clone(&food_updated)));
 
-    tokio::spawn(client::run_ws_client(Arc::clone(&game_data), Arc::clone(&player_data)));
+    tokio::spawn(client::run_ws_client(Arc::clone(&game_data), Arc::clone(&player_data), Arc::clone(&food_updated)));
     HttpResponse::Ok().body("Game started")
 }
 
@@ -53,10 +58,13 @@ async fn main() -> std::io::Result<()>{
 
     let game_data = web::Data::new(Arc::new(Mutex::new(GameData::new())));
 
+    let food_updated = web::Data::new(Arc::new(Mutex::new(false)));
+
     HttpServer::new(move || {
         App::new()
             .app_data(game_data.clone())
             .app_data(player_data.clone())
+            .app_data(food_updated.clone())
             .service(get_data)
             .service(change_direction)
             .service(start_game)

@@ -15,6 +15,12 @@ impl GameData {
         };
         game_data
     }
+    pub fn set_food(&mut self) {
+        self.food = Point::gen_new();
+    }
+    pub fn get_food(&self) -> &Point {
+        &self.food
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,6 +49,15 @@ impl PlayerData {
     pub fn change_direction(&mut self, new_direction: Direction) {
         self.snake.change_direction(new_direction);
     }
+    pub fn food_collision(&mut self, food: &Point) -> bool{
+        for block in &self.snake.body {
+            if block == food {
+                self.snake.has_eaten = true;
+                return true;
+            }
+        }
+        false
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -50,6 +65,27 @@ pub struct Point {
     x: i32,
     y: i32
 }
+
+impl Point {
+    pub fn gen_new() -> Point{
+        let mut rng = rand::thread_rng();
+        let x: i32 = rng.gen_range(1..=20);
+        let y: i32 = rng.gen_range(1..=20);
+        Point {x, y}
+    }
+}
+
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        if self.x == other.x && self.y == other.y {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl Eq for Point {}
 
 impl Clone for Point {
     fn clone(&self) -> Self {
@@ -99,7 +135,8 @@ impl Direction {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Snake {
     direction: Direction,
-    body: Vec<Point>  
+    body: Vec<Point>,
+    has_eaten: bool  
 }
 impl Snake {
 
@@ -107,10 +144,16 @@ impl Snake {
         direction: Direction,
         body: Vec<Point>
     ) -> Snake {
-       Snake {direction, body} 
+       Snake {direction, body, has_eaten: false} 
     }
 
     pub fn move_snake(&mut self) {
+
+        if self.has_eaten {
+            let new_segment = self.body.last().unwrap();
+            self.body.push(new_segment.clone());
+            self.has_eaten = false;
+        }
         
         for i in (1..self.body.len()).rev() {
 
