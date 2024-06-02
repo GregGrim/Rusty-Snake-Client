@@ -9,9 +9,35 @@ for (let i = 0; i < 400; i++) {
 
 document.getElementById('startButton').addEventListener('click', async () => {
     const response = await fetch('/start');
-    // const initialGameData = await response.json();
-    // updateGameField(initialGameData);
-    setInterval(fetchGameData, 1000);
+    setInterval(fetchGameData, 200);
+});
+
+document.addEventListener('keydown', async (event) => {
+    let direction;
+    switch (event.key) {
+        case 'ArrowUp':
+            direction = 'Up';
+            break;
+        case 'ArrowDown':
+            direction = 'Down';
+            break;
+        case 'ArrowLeft':
+            direction = 'Left';
+            break;
+        case 'ArrowRight':
+            direction = 'Right';
+            break;
+        default:
+            return; // Exit this handler for other keys
+    }
+
+    await fetch('/change_direction', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({direction}),
+    });
 });
 
 async function fetchGameData() {
@@ -34,9 +60,9 @@ function updateGameField(gameData) {
         cell.classList.remove('snake', 'food');
     });
 
-    // Render the snakes for all players
+    // Render the snakes of all players
     gameData.players.forEach(player => {
-        player.snake_position.forEach(position => {
+        player.snake.body.forEach(position => {
             const index = position.y * 20 + position.x;
             cells[index].classList.add('snake');
         });

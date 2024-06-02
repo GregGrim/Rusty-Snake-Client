@@ -1,5 +1,5 @@
 [package]
-name = "rastach"
+name = "rustach"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,3 +14,4 @@ serde_json = "1.0"
 uuid = { version = "1.8.0", features = ["v4"] }
 chrono = "0.4.38"
 actix-web = "4"
+rand = "0.8"

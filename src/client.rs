@@ -11,7 +11,7 @@ pub async fn run_ws_client(game_data: SharedGameData, player_data: SharedPlayerD
     let url = "ws://127.0.0.1:3000";
     let (mut ws_stream, _) = connect_async(url).await.expect("Failed to connect");
 
-    let mut interval = time::interval(Duration::from_secs(1));
+    let mut interval = time::interval(Duration::from_millis(500));
 
     *player_data.lock().await = PlayerData::new();
 

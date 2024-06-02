@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use actix_web::{get, post, web::{self, to}, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web::{self}, App, HttpResponse, HttpServer, Responder};
 use engine::models::{GameData, PlayerData};
+use serde::Deserialize;
 use tokio::sync::Mutex;
 
 mod client;
@@ -12,22 +13,28 @@ mod engine;
 type SharedGameData = Arc<Mutex<GameData>>;
 type SharedPlayerData = Arc<Mutex<PlayerData>>;
 
+#[derive(Deserialize)]
+struct ChangeDirectionRequest {
+    direction: String,
+}
+
 #[get("/snake")]
 async fn get_data(game_data: web::Data<SharedGameData>) -> impl Responder{
     let game_data = game_data.lock().await;
     HttpResponse::Ok().json(&*game_data)
 }
 
-#[post("/snake")]
-async fn send_data(player_data: web::Json<PlayerData>, shared_player_data: web::Data<SharedPlayerData>) -> impl Responder {
-    let mut player_data_lock = shared_player_data.lock().await;
-    *player_data_lock = player_data.into_inner();
+#[post("/change_direction")]
+async fn change_direction(player_data: web::Data<SharedPlayerData>, direction_param: web::Json<ChangeDirectionRequest>) -> impl Responder {
+    engine::change_direction(Arc::clone(&player_data), direction_param.direction.as_str()).await;
     HttpResponse::Ok()
 }
 
 #[get("/start")]
 async fn start_game(game_data: web::Data<SharedGameData>, player_data: web::Data<SharedPlayerData>) -> impl Responder {
     
+    tokio::spawn(engine::run_snake_engine(Arc::clone(&player_data)));
+
     tokio::spawn(client::run_ws_client(Arc::clone(&game_data), Arc::clone(&player_data)));
     HttpResponse::Ok().body("Game started")
 }
@@ -51,7 +58,7 @@ async fn main() -> std::io::Result<()>{
             .app_data(game_data.clone())
             .app_data(player_data.clone())
             .service(get_data)
-            .service(send_data)
+            .service(change_direction)
             .service(start_game)
             .service(create_app)
             .route(
