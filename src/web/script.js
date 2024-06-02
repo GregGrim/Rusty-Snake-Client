@@ -1,15 +1,28 @@
 const gameField = document.getElementById('gameField');
+const startButton = document.getElementById('startButton');
+
+let gameInterval;
 
 // Create the 20x20 grid
-for (let i = 1; i <= 400; i++) {
+for (let i = 0; i < 400; i++) {
     const cell = document.createElement('div');
     cell.classList.add('cell');
     gameField.appendChild(cell);
 }
 
-document.getElementById('startButton').addEventListener('click', async () => {
-    const response = await fetch('/start');
-    setInterval(fetchGameData, 200);
+startButton.addEventListener('click', async () => {
+    startButton.disabled = true;
+    try {
+        const response = await fetch('/start');
+        if (!response.ok) {
+            throw new Error('Failed to start the game');
+        }
+        fetchGameData(); 
+        gameInterval = setInterval(fetchGameData, 200); 
+    } catch (error) {
+        console.error('Failed to start the game:', error);
+        startButton.disabled = false;
+    }
 });
 
 document.addEventListener('keydown', async (event) => {
@@ -31,18 +44,22 @@ document.addEventListener('keydown', async (event) => {
             return; // Exit this handler for other keys
     }
 
-    await fetch('/change_direction', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({direction}),
-    });
+    try {
+        await fetch('/change_direction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ direction }),
+        });
+    } catch (error) {
+        console.error('Failed to change direction:', error);
+    }
 });
 
 async function fetchGameData() {
     try {
-        const response = await fetch('http://127.0.0.1:8080/snake');
+        const response = await fetch('/snake');
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -50,6 +67,8 @@ async function fetchGameData() {
         updateGameField(gameData);
     } catch (error) {
         console.error('Failed to fetch game data:', error);
+        clearInterval(gameInterval);
+        startButton.disabled = false;
     }
 }
 
