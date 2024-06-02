@@ -2,20 +2,34 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GameData {
-    pub player_id: u32,
-    pub position: (i32, i32),
-    pub direction: String,
-    pub score: u32,
+    players: Vec<PlayerData>,
+    food: Point,
 }
 
-impl GameData {
-    pub fn new() -> GameData {
-        let game_data = GameData {
-            player_id: 1,
-            position: (0, 0),
-            direction: "up".to_string(),
-            score: 0,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PlayerData{
+    player_id: String,
+    snake_position: Vec<Point>,
+    score: i32
+}
+
+impl PlayerData {
+    pub fn new() -> PlayerData {
+        let player = PlayerData {
+            player_id: uuid::Uuid::new_v4().to_string(),
+            snake_position: vec![
+                Point{x: 0, y: 0},
+                Point{x: 1, y: 0},
+                Point{x: 2, y: 0}
+                ],
+            score: 0
         };
-        game_data
+        player
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Point{
+    x: i32,
+    y: i32
 }
