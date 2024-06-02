@@ -6,6 +6,16 @@ pub struct GameData {
     food: Point,
 }
 
+impl GameData {
+    pub fn new() -> GameData{
+        let game_data =  GameData {
+            players: vec![],
+            food: Point{x:10, y:10}
+        };
+        game_data
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PlayerData{
     player_id: String,
