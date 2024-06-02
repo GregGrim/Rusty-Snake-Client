@@ -13,6 +13,7 @@ mod engine;
 type SharedGameData = Arc<Mutex<GameData>>;
 type SharedPlayerData = Arc<Mutex<PlayerData>>;
 type FoodUpdatedState = Arc<Mutex<bool>>;
+type GameOverState = Arc<Mutex<bool>>;
 
 #[derive(Deserialize)]
 struct ChangeDirectionRequest {
@@ -26,7 +27,10 @@ async fn get_data(game_data: web::Data<SharedGameData>) -> impl Responder{
 }
 
 #[post("/change_direction")]
-async fn change_direction(player_data: web::Data<SharedPlayerData>, direction_param: web::Json<ChangeDirectionRequest>) -> impl Responder {
+async fn change_direction(
+    player_data: web::Data<SharedPlayerData>, 
+    direction_param: web::Json<ChangeDirectionRequest>
+) -> impl Responder {
     engine::change_direction(Arc::clone(&player_data), direction_param.direction.as_str()).await;
     HttpResponse::Ok()
 }
@@ -35,12 +39,26 @@ async fn change_direction(player_data: web::Data<SharedPlayerData>, direction_pa
 async fn start_game(
     game_data: web::Data<SharedGameData>, 
     player_data: web::Data<SharedPlayerData>,
-    food_updated: web::Data<FoodUpdatedState>
+    food_updated: web::Data<FoodUpdatedState>,
+    game_over: web::Data::<GameOverState>
 ) -> impl Responder {
-    
-    tokio::spawn(engine::run_snake_engine(Arc::clone(&player_data), Arc::clone(&game_data), Arc::clone(&food_updated)));
 
-    tokio::spawn(client::run_ws_client(Arc::clone(&game_data), Arc::clone(&player_data), Arc::clone(&food_updated)));
+    *food_updated.lock().await = false;
+    *game_over.lock().await = false;
+    
+    tokio::spawn(engine::run_snake_engine(
+        Arc::clone(&player_data),
+        Arc::clone(&game_data),
+        Arc::clone(&food_updated),
+        Arc::clone(&game_over)
+    ));
+
+    tokio::spawn(client::run_ws_client(
+        Arc::clone(&game_data), 
+        Arc::clone(&player_data), 
+        Arc::clone(&food_updated),
+        Arc::clone(&game_over)
+    ));
     HttpResponse::Ok().body("Game started")
 }
 
@@ -60,11 +78,14 @@ async fn main() -> std::io::Result<()>{
 
     let food_updated = web::Data::new(Arc::new(Mutex::new(false)));
 
+    let game_over = web::Data::new(Arc::new(Mutex::new(false)));
+
     HttpServer::new(move || {
         App::new()
             .app_data(game_data.clone())
             .app_data(player_data.clone())
             .app_data(food_updated.clone())
+            .app_data(game_over.clone())
             .service(get_data)
             .service(change_direction)
             .service(start_game)

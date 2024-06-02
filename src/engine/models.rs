@@ -21,6 +21,19 @@ impl GameData {
     pub fn get_food(&self) -> &Point {
         &self.food
     }
+
+    pub fn check_players_collision(&mut self, current_player: &PlayerData) -> bool{
+        for player in &self.players {
+            if player.player_id != current_player.player_id {
+                for point in &player.snake.body {
+                    if current_player.snake.body.contains(point) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,9 +48,9 @@ impl PlayerData {
         let player = PlayerData {
             player_id: uuid::Uuid::new_v4().to_string(),
             snake: Snake::new(Direction::Right, vec![
-                Point{x: 0, y: 0},
-                Point{x: 1, y: 0},
-                Point{x: 2, y: 0}
+                Point{x: 3, y: 1},
+                Point{x: 2, y: 1},
+                Point{x: 1, y: 1}
                 ]),
             score: 0
         };
@@ -57,6 +70,9 @@ impl PlayerData {
             }
         }
         false
+    }
+    pub fn check_collision(&mut self) -> bool {
+        self.snake.check_collision()
     }
 }
 
@@ -168,32 +184,24 @@ impl Snake {
         self.direction = new_direction
     }
 
-    fn snake_collision(& self) -> bool {
+    fn self_collision(& self) -> bool {
         let head = &self.body[0];
-        for i in (1..self.body.len()) {
+        for i in 1..self.body.len() {
             if self.body[i].x == head.x && self.body[i].y == head.y {
                 return true;
             }
         }
         false
     }
-    fn wall_collision(& self, map_size: i32) -> bool {
+    fn wall_collision(& self) -> bool {
         let head = &self.body[0];
         head.x < 0 || 
         head.y < 0 || 
-        head.x>map_size || 
-        head.y > map_size
+        head.x > 20 || 
+        head.y > 20
     }
 
-    pub fn check_collision(& self, map_size: i32) -> bool {
-        self.snake_collision() || self.wall_collision(map_size)
+    pub fn check_collision(& self) -> bool {
+        self.self_collision() || self.wall_collision()
     }
-
-    // pub fn to_player_data(&self, player_id: String, score: i32) -> PlayerData {
-    //     PlayerData {
-    //         player_id,
-    //         snake_position: self.body.clone(),
-    //         score,
-    //     }
-    // }  
 }

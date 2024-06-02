@@ -3,6 +3,9 @@ const startButton = document.getElementById('startButton');
 
 let gameInterval;
 
+
+//TODO add gameover window
+
 // Create the 20x20 grid
 for (let i = 0; i < 400; i++) {
     const cell = document.createElement('div');
