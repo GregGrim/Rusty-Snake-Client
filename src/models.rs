@@ -20,7 +20,8 @@ impl GameData {
 pub struct PlayerData{
     player_id: String,
     snake: Snake,
-    score: i32
+    score: i32,
+    game_over: bool
 }
 
 #[derive(Serialize, Deserialize, Debug)]
