@@ -1,17 +1,23 @@
-const gameField = document.getElementById('gameField');
+const gameFieldContainer = document.getElementById('gameField');
 const startButton = document.getElementById('startButton');
 
 let gameInterval;
 let keydownListener;
 let playerID;
 
-//TODO add gameover window
+const gridSize = 20;
+let gameField = [];
 
-// Create the 20x20 grid
-for (let i = 0; i < 400; i++) {
-    const cell = document.createElement('div');
-    cell.classList.add('cell');
-    gameField.appendChild(cell);
+// Create the 20x20 grid and initialize gameField as a 2D array
+for (let y = 0; y < gridSize; y++) {
+    const row = [];
+    for (let x = 0; x < gridSize; x++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        gameFieldContainer.appendChild(cell);
+        row.push(cell);
+    }
+    gameField.push(row);
 }
 
 startButton.addEventListener('click', async () => {
@@ -75,8 +81,7 @@ async function fetchGameData() {
         }
         const gameData = await response.json();
 
-        updateGameField(gameData);
-        //console.log("players: ", gameData.players);
+        console.log("players: ", gameData);
         //console.log("playerID: ", playerID);
         
         const player = gameData.players.find((player) => player.player_id == playerID);
@@ -84,9 +89,11 @@ async function fetchGameData() {
             //clearInterval(gameInterval);
             document.removeEventListener('keydown', keydownListener);
             startButton.disabled = false;
+            clearGameField();
             alert(`Game Over. Your score: ${player.score}`);
+        } else{
+            updateGameField(gameData);
         }
-
     } catch (error) {
         console.error('Failed to fetch game data:', error);
         clearInterval(gameInterval);
@@ -95,21 +102,23 @@ async function fetchGameData() {
 }
 
 function updateGameField(gameData) {
-    // Clear the game field
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach(cell => {
-        cell.classList.remove('snake', 'food');
-    });
-
+    clearGameField();
     // Render the snakes of all players
     gameData.players.forEach(player => {
         player.snake.body.forEach(position => {
-            const index = position.y * 20 + position.x;
-            cells[index].classList.add('snake');
+            gameField[position.y][position.x].classList.add('snake');
         });
     });
 
     // Render the food
-    const foodIndex = gameData.food.y * 20 + gameData.food.x;
-    cells[foodIndex].classList.add('food');
+    const foodPosition = gameData.food;
+    gameField[foodPosition.y][foodPosition.x].classList.add('food');
+}
+
+function clearGameField() {
+    for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+            gameField[y][x].classList.remove('snake', 'food');
+        }
+    }
 }
