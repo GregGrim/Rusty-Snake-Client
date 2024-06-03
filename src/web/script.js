@@ -2,7 +2,8 @@ const gameField = document.getElementById('gameField');
 const startButton = document.getElementById('startButton');
 
 let gameInterval;
-
+let keydownListener;
+let playerID;
 
 //TODO add gameover window
 
@@ -20,6 +21,12 @@ startButton.addEventListener('click', async () => {
         if (!response.ok) {
             throw new Error('Failed to start the game');
         }
+
+        playerID = await response.json();
+
+        keydownListener = handleKeydown.bind(null);
+        document.addEventListener('keydown', keydownListener);
+
         fetchGameData(); 
         gameInterval = setInterval(fetchGameData, 200); 
     } catch (error) {
@@ -28,7 +35,7 @@ startButton.addEventListener('click', async () => {
     }
 });
 
-document.addEventListener('keydown', async (event) => {
+async function handleKeydown(event) {
     let direction;
     switch (event.key) {
         case 'ArrowUp':
@@ -58,7 +65,7 @@ document.addEventListener('keydown', async (event) => {
     } catch (error) {
         console.error('Failed to change direction:', error);
     }
-});
+}
 
 async function fetchGameData() {
     try {
@@ -67,7 +74,19 @@ async function fetchGameData() {
             throw new Error('Network response was not ok');
         }
         const gameData = await response.json();
+
         updateGameField(gameData);
+        //console.log("players: ", gameData.players);
+        //console.log("playerID: ", playerID);
+        
+        const player = gameData.players.find((player) => player.player_id == playerID);
+        if (player.game_over) {
+            //clearInterval(gameInterval);
+            document.removeEventListener('keydown', keydownListener);
+            startButton.disabled = false;
+            alert(`Game Over. Your score: ${player.score}`);
+        }
+
     } catch (error) {
         console.error('Failed to fetch game data:', error);
         clearInterval(gameInterval);
