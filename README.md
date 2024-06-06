@@ -1,1 +1,1 @@
-Frontend Client for RustySnakeGame
+Frontend Client for RustySnakeMultiplayer
