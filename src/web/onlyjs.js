@@ -8,6 +8,7 @@ let ws;
 
 const gridSize = 20;
 let gameField = [];
+const ip = window.location.hostname;
 
 // Create the 20x20 grid and initialize gameField as a 2D array
 for (let y = 0; y < gridSize; y++) {
@@ -21,7 +22,7 @@ for (let y = 0; y < gridSize; y++) {
     gameField.push(row);
 }
 window.onload = () => {
-    ws = new WebSocket('wss://0.0.0.0:3000');
+    ws = new WebSocket(`ws://${ip}:3000`);
 
     ws.onopen = () => {
         console.log('WebSocket connected');
